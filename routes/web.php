@@ -16,3 +16,9 @@
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+//хуки от амо об измененниях сделок
+$router->post('/changes/hook', 'ChangeController@hook');
+
+//отработка сохраненных лидов в бд
+$router->get('/changes/cron', 'ChangeController@cron');
