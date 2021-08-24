@@ -48,6 +48,5 @@ class ChangeController extends Controller
 
     public function cron()
     {
-
     }
 }
