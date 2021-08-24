@@ -24,6 +24,7 @@ class ChangeController extends Controller
 
                 $lead = Change::where('lead_id', $lead_id)
                     ->where('status', 'OK')
+                    ->where('status', 'В компании уже есть нужный тег')
                     ->first();
 
                 if(!$lead) {
@@ -43,10 +44,49 @@ class ChangeController extends Controller
             } else
                 Log::warning('Нет изменений в полях : '. $lead_id, $custom_fields);
         } else
-            Log::warning('Не нужная воронка : '. $request->toArray()['update'][0]['pipeline_id']);
+            Log::warning('Ненужная воронка : '. $request->toArray()['update'][0]['pipeline_id']);
     }
 
     public function cron()
     {
+        $changes = Change::where('status', '!=', 'OK')->get();
+
+        if($changes->count() > 0) {
+
+            $ufee = $this->init();
+
+            foreach ($changes as $change) {
+
+                try {
+                    $lead = $ufee->leads()->find($change->lead_id);
+
+                    $company = $lead->company;
+
+                    if($company) {
+
+                        //тут получаем теги компании
+                        //если есть нужный, то
+                        $change->status = 'В компании уже есть нужный тег';
+                        $change->company_id = $company->id;
+                        $change->save();
+
+                        //если тега нет, то добавляем его
+                        $company->attachTag('Продающее АН');
+                        $company->save();
+
+                        $change->status = 'OK';
+                        $change->save();
+
+                    } else {
+                        $change->status = 'У лида нет компании';
+                        $change->save();
+                    }
+                } catch (\Exception $exception) {
+
+                    $change->status = $exception->getMessage();
+                    $change->save();
+                }
+            }
+        }
     }
 }
