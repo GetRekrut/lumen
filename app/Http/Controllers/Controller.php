@@ -18,6 +18,8 @@ class Controller extends BaseController
         try {
             $ufee = \Ufee\Amo\Oauthapi::getInstance(env('AMO_CLIENT_ID'));
 
+            $ufee->account->toArray();
+
         } catch (\Exception $exception) {
 
             $ufee->fetchAccessToken(env('AMO_CODE'));

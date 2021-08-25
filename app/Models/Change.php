@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 class Change extends Model
 {
     protected $fillable = [
-
+        'lead_id',
+        'value',
     ];
 
 

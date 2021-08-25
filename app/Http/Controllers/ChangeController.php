@@ -4,21 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Change;
 use Illuminate\Support\Facades\Log;
-use Laravel\Lumen\Http\Request;
-use Ufee\Amo\Models\Lead;
+use Illuminate\Support\Facades\Request;
+
 
 class ChangeController extends Controller
 {
     public function hook(Request $request)
     {
-        Log::info(__METHOD__, $request->toArray());
+        Log::info(__METHOD__, $request::capture()->toArray());
 
-        if($request->toArray()['update'][0]['pipeline_id'] == 4582795) {
+        if($request::capture()->toArray()['update'][0]['pipeline_id'] == 4582795) {
 
+            $input = $request::capture()->toArray();
 
-            $lead_id = $request->toArray()['update'][0]['lead_id'];
+            $lead_id = $input['update'][0]['id'];
 
-            $custom_fields = $request->toArray()['update'][0]['custom_fields'];
+            $custom_fields = $input['update'][0]['custom_fields'];
 
             if(count($custom_fields) > 0) {
 
@@ -31,11 +32,11 @@ class ChangeController extends Controller
 
                     foreach ($custom_fields as $custom_field) {
 
-                        if($custom_field['id'] == 760347 && $custom_field['id']['values']['value'] == 'Да') {
+                        if($custom_field['id'] == 760347 && $custom_field['values']['value'] == 'Да') {
 
-                            Lead::create([
+                            Change::create([
                                 'lead_id' => $lead_id,
-                                'value' => $custom_field['id']['values']['value'],
+                                'value' => $custom_field['values']['value'],
                             ]);
                         }
                     }
@@ -64,17 +65,26 @@ class ChangeController extends Controller
 
                     if($company) {
 
-                        //тут получаем теги компании
-                        //если есть нужный, то
-                        $change->status = 'В компании уже есть нужный тег';
-                        $change->company_id = $company->id;
-                        $change->save();
+                        if(count($company->tags) > 0) {
 
-                        //если тега нет, то добавляем его
+                            foreach ($company->tags as $tag) {
+
+                                if($tag == 'Продающее АН') {
+
+                                    $change->status = 'В компании уже есть нужный тег';
+                                    $change->company_id = $company->id;
+                                    $change->save();
+
+                                    continue 2;
+                                }
+                            }
+                        }
+
                         $company->attachTag('Продающее АН');
                         $company->save();
 
                         $change->status = 'OK';
+                        $change->company_id = $company->id;
                         $change->save();
 
                     } else {
