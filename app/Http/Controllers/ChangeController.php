@@ -13,13 +13,17 @@ class ChangeController extends Controller
     {
         Log::info(__METHOD__, $request::capture()->toArray());
 
-        if($request::capture()->toArray()['update'][0]['pipeline_id'] == 4582795) {
+        $input = !empty($request::capture()->toArray()['leads']['update'][0]) ?
+            $request::capture()->toArray()['leads']['update'][0] :
+            $request::capture()->toArray()['leads']['add'][0];
+
+        if($input['pipeline_id'] == 4582795) {
 
             $input = $request::capture()->toArray();
 
-            $lead_id = $input['update'][0]['id'];
+            $lead_id = $input['id'];
 
-            $custom_fields = $input['update'][0]['custom_fields'];
+            $custom_fields = $input['custom_fields'];
 
             if(count($custom_fields) > 0) {
 
@@ -45,7 +49,7 @@ class ChangeController extends Controller
             } else
                 Log::warning('Нет изменений в полях : '. $lead_id, $custom_fields);
         } else
-            Log::warning('Ненужная воронка : '. $request->toArray()['update'][0]['pipeline_id']);
+            Log::warning('Ненужная воронка : '. $input['pipeline_id']);
     }
 
     public function cron()
